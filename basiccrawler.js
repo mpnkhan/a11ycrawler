@@ -6,9 +6,10 @@
   const queue = require('async/queue')
   const colors = require('colors')
 
+  // var initialURL = "https://atom.io/"
+  var initialURL = "https://paypal.com/"
 
-module.exports = (options) => {
-  const crawler = new Crawler(options.url)
+  const crawler = new Crawler(initialURL)
   crawler.respectRobotsTxt = false
   crawler.parseHTMLComments = false
   crawler.parseScriptTags = false
@@ -41,5 +42,5 @@ module.exports = (options) => {
     lighthouseQueue.drain = () => {
     }
   })
+
   crawler.start()
-}  
