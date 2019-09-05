@@ -1,1 +1,31 @@
+lib-cov
+*.seed
+*.log
+*.csv
+*.dat
+*.out
+*.pid
+*.gz
+
+pids
+
+#log giles
+npm-debug.log
+logs
+
+
+# OS
+.DS_Store
+
+# node
 node_modules
+
+# lockfiles (you can remove these if you want them).
+package-lock.json
+yarn.lock
+
+# IDEs and editors
+.idea
+.vscode
+
+results
