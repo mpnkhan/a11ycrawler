@@ -8,6 +8,7 @@ lib-cov
 *.gz
 
 pids
+reports
 
 #log giles
 npm-debug.log
@@ -28,4 +29,3 @@ yarn.lock
 .idea
 .vscode
 
-results

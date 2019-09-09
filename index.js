@@ -19,14 +19,14 @@
 module.exports = (options) => {
   stats.startTime = new Date()
 
-  const crawler = new Crawler(options.url);
-  crawler.respectRobotsTxt = false;
-  crawler.parseHTMLComments = false;
-  crawler.parseScriptTags = false;
-  crawler.maxDepth = 2;
-  crawler.maxChromeInstances =5;
+  let crawler = new Crawler(options.url);
+    crawler.respectRobotsTxt = false;
+    crawler.parseHTMLComments = false;
+    crawler.parseScriptTags = false;
+    crawler.maxDepth = 2;
+    crawler.maxChromeInstances =5;
   
-  stats.mainURL = options.url;
+    stats.mainURL = options.url;
 
   crawler.discoverResources = (buffer, item) => {
     const page = cheerio.load(buffer.toString('utf8'));
@@ -47,20 +47,20 @@ module.exports = (options) => {
                       <body>
                      <table border="1" style="width: 70%; height: 100%; border:1px solid #8B008B">
                         <tr>
-                          <th>Main url</th>
-                          <th>Main url</th>
-                          <th>Total Pages scanned</th>
-                          <th>Total time</th>
-    
+                          <th> Url</th>
+                          <th> Link to Detailed Report</th>
+   
                         `
 
-  crawler.on('fetchcomplete', (queueItem, responseBuffer, response) => {
+  crawler.on('fetchcomplete', (queueItem, data, response) => {
     console.log(queueItem.url);
+    // var resume = crawler.wait();
     const ac = runLighthouse(queueItem.url);
     ac.then(results => {
       stats.auditTimesByPageUrl[queueItem.url].endTime = new Date();
       indexreport+=results;
       // console.log(results);
+       // resume();
     })
   })
   crawler.once('complete', () => {
@@ -81,9 +81,9 @@ module.exports = (options) => {
         stats.pageCount++
         const file = url.replace(/^.*[\\\/]/, '');
         const fArr =file.split('.');
-        if(fArr[0].length===0) fArr[0]='home';
+        if(fArr[0].length===0) fArr[0]=Math.floor((Math.random()*100)+1);
         const filename = 'reports/' + stats.scanId + '/' + fArr[0] + '.html';
-        console.log(filename);
+        // console.log(filename);
 
         const args = [
           url,
@@ -99,15 +99,18 @@ module.exports = (options) => {
         const lighthousePath = require.resolve('lighthouse/lighthouse-cli/index.js');
         const lighthouse = ChildProcess.spawn(lighthousePath, args);
 
-        results2 =`<tr><td>${url}</td><td><a href=../"${filename}">${filename}</a></td></tr>`
+
+        results2 =`<tr><td>${url}</td><td><a href="${fArr[0]}.html">${fArr[0]}.html</a></td></tr>`
+        results2 = results2 +'\n';
         stats.auditTimesByPageUrl[url] = {startTime: new Date()}
         lighthouse.once('close', () => {
-          resolve(results2);
+          // resolve(results2);
         })
+        resolve(results2);
      })
   }
 
-  function saveReport(indexreport){
+  async function saveReport(indexreport){
     console.log();
     console.log('Lighthouse Summary'.bold.underline);
     console.log('stats', JSON.stringify(stats));    
@@ -121,17 +124,29 @@ module.exports = (options) => {
     console.log(`  Average Page Audit Time: ${Math.round(totalTime/stats.pageCount)} ms`);
 
     const indexFile = stats.scanId +'/index.html';
-    const mainreport = '<tr><td><a href="'+ indexFile +'>"'> + stats.scanId +'</td><td>'+ stats.mainURL +'</td><td>'+ stats.pageCount +'</td><td>'+ Math.round(totalTime/stats.pageCount) +'ms </td></tr>';
+    let  mainreport = `<tr><td><a href="${indexFile}">${stats.scanId}</a></td><td>${stats.mainURL}</td><td>${stats.pageCount}</td><td>${Math.round(totalTime/stats.pageCount)} ms</td><td>${stats.startTime.toLocaleString()}</tr>`
+    mainreport = mainreport +'\n';
 
-
-    fs.appendFile('reports/report.html', mainreport, function (err) {
-      if (err) throw err;
-      console.log('Appended to report!');
-      process.exit(1);    
-    });
-    // fs.writeFile('reports/'+ indexFile, indexreport , function (err) {
-    //     if (err) throw err;
-    //     console.log('Saved index report!'); 
-    //     process.exit(1);            
-    // })
+    await appendResult('reports/report.html', mainreport);
+    await writeResult('reports/'+ indexFile, indexreport);
   }
+
+ function writeResult(fname, result){
+   // console.log(result)
+  return new Promise(function(resolve) {
+    fs.writeFile(fname, result, function (err) {
+      if (err) reject(err);
+      resolve();
+    });
+  })
+}
+
+ function appendResult(fname, result){
+   // console.log(result)
+  return new Promise(function(resolve) {
+    fs.appendFile(fname, result, function (err) {
+      if (err) reject(err);
+      resolve();
+    });
+  })
+}
