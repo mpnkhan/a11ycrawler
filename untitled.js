@@ -101,9 +101,7 @@ module.exports = (options) => {
 
         results2 =`<tr><td>${url}</td><td><a href=../"${filename}">${filename}</a></td></tr>`
         stats.auditTimesByPageUrl[url] = {startTime: new Date()}
-        lighthouse.once('close', () => {
-          resolve(results2);
-        })
+        resolve(results2);          
      })
   }
 
@@ -129,9 +127,9 @@ module.exports = (options) => {
       console.log('Appended to report!');
       process.exit(1);    
     });
-    // fs.writeFile('reports/'+ indexFile, indexreport , function (err) {
-    //     if (err) throw err;
-    //     console.log('Saved index report!'); 
-    //     process.exit(1);            
-    // })
+    fs.writeFile('reports/'+ indexFile, indexreport , function (err) {
+        if (err) throw err;
+        console.log('Saved index report!'); 
+        process.exit(1);            
+    })
   }
