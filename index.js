@@ -36,21 +36,15 @@ module.exports = (options) => {
     return links;
   }
 
-  let indexreport=`<!doctype html>
-                      <html lang="en">
-                      <head>
-                        <meta charset="utf-8">
-                        <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
-                        <link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAADjklEQVR4AWI08P/HQEvAQrxSQKvlECfLFYXx75xCY2qmh89GbNvOMjb3v9jOOlxnFWxj206ebQ3b7q6q+z1rNagu8/zvPSZACAABpeUAA0miMgU7SA7JjCraFGwZwECOwvL75dWjsKgWBKtx0jvWo+vkBAFbACCkByMP6nMn48+AVgXB2fzSCwsv22/lMGlUhmJ0AE7BH8dyUUDbUEgN6RzJRSeaPxhdRYR0Inel+7Hd5lBiFpkMAxACc0394//9C4voFHDiAAGLpuOXebdfdHfctgwJKaZRLRKy6ItrSis6RBnVBgGtbHyKTEmJHQoEXoBCE5BCrDeA2ogMUIGDAKEBDEhUqwgMqBYDjW4DQzmuffVdqff42/ZQYYqVcMXGZsMPyCsH3lyJSetxvEaxAQXdjR1HjfwCdIS7lo2DZke26Qe+MXO12OWkGT0O6oE7vMGkMnkYw4aN1KQgMKExhXqswfiov4+a7MQ11XPnbr/5qpKlgACAAQj94Lu271bN9DUecQasIZlNzG72llRAAKJiAi+/BSHrSFjRvQhg3DEKEqJh08tsmLTx597+f6enr4cc2Zpk57pihfX24dW7RHcOLLUbJYhJSl0ErQCI9BVXH/XrO97QasuvQQSiECa0BrQCIIJp6X9T/r8QG6L71WYSqCoIIGo2BZDUBnS/D9EA9Nun1iYvbM0MFExIDQRoKFatc1Z6zrm5uWeObJotq0BGV9FuQBWq5a4Fw3PPz848rZHstZSuA5FWAFSMP2nOppOOGpl6qh9PCSg0IFyHKjSQyDNQHTru2t75NOEe0fsf246oAmFkI6vCdnWvbQFQFCKx8vCswV8TrDLiDLgH4Nr7RAtNsrC9d8sfk7b8ls4igdNy8CQKAISlsB0FjZfd3Lfp155tf8fKI4BxZZIj/oTdVEAIAcJFOCmzauHG71I7/rdreUAgAqpDP05fDARCAQQARwEIBQSVxq0FyaLvZZtevpHa8WHw8cft6cpxlq8eAJtIhnSbWDf951yx3y13OqUuu5qyGgkxCgGFh9cDihDGbTa6BqvT1lWmrav3bmt2ZMJ4mU6TGgIC4DBzcv/JqAau1WhzSt3x9Ixk/4Jk/8J4ZrrViFMA4W6A7+WK8xcVjvyrOmVD0FbAXokcT48r+xVqLKvuJYbmpNadnlp3mpufJHOe/GXktM+r09bT8kEdq9BRYAbGSgzP7ll82U71Mc+ZFooXgwAAAABJRU5ErkJggg==">
-                        <title>Index Report</title>
-                      </head>
-                      <body>
-                     <table border="1" style="width: 70%; height: 100%; border:1px solid #8B008B">
-                        <tr>
-                          <th> Url</th>
-                          <th> Link to Detailed Report</th>
-   
-                        `
+  let leftFrameContents ='<!DOCTYPE html><html><body><h2><a href="../report.html" target="_main"> Back </a> </h2><ol>';
+  let indexFrameContents =`<!DOCTYPE html>
+                          <html>
+                          <frameset cols="20%,*">
+                            <frame src="leftFrame.html">
+                            <frame name="main" src="main.htm">
+                          </frameset>
+                          </html>
+                          `;
 
   crawler.on('fetchcomplete', (queueItem, data, response) => {
     console.log(queueItem.url);
@@ -58,14 +52,42 @@ module.exports = (options) => {
     const ac = runLighthouse(queueItem.url);
     ac.then(results => {
       stats.auditTimesByPageUrl[queueItem.url].endTime = new Date();
-      indexreport+=results;
+      leftFrameContents+= results + "\n";
       // console.log(results);
        // resume();
     })
   })
   crawler.once('complete', () => {
-    saveReport(indexreport);
+    leftFrameContents+='</ol></body></html>';
+    saveReport(indexFrameContents, leftFrameContents);
   })
+
+//DEBUG Start
+  var originalEmit = crawler.emit;
+crawler.emit = function(evtName, queueItem) {
+    crawler.queue.countItems({ fetched: true }, function(err, completeCount) {
+        if (err) {
+            throw err;
+        }
+
+        crawler.queue.getLength(function(err, length) {
+            if (err) {
+                throw err;
+            }
+
+            console.log("fetched %d of %d — %d open requests, %d open listeners",
+                completeCount,
+                length,
+                crawler._openRequests.length,
+                crawler._openListeners);
+        });
+    });
+
+    console.log(evtName, queueItem ? queueItem.url ? queueItem.url : queueItem : null);
+    originalEmit.apply(crawler, arguments);
+};
+//DEBUG End
+
 
   crawler.start();
 
@@ -99,8 +121,7 @@ module.exports = (options) => {
         const lighthousePath = require.resolve('lighthouse/lighthouse-cli/index.js');
         const lighthouse = ChildProcess.spawn(lighthousePath, args);
 
-
-        results2 =`<tr><td>${url}</td><td><a href="${fArr[0]}.html">${fArr[0]}.html</a></td></tr>`
+        results2 =`<li><a target="main" href="${fArr[0]}.html">${url}</a></li>`
         results2 = results2 +'\n';
         stats.auditTimesByPageUrl[url] = {startTime: new Date()}
         lighthouse.once('close', () => {
@@ -110,10 +131,12 @@ module.exports = (options) => {
      })
   }
 
-  async function saveReport(indexreport){
+  async function saveReport(indexFrameContents, leftFrameContents){
+    console.log();
     console.log();
     console.log('Lighthouse Summary'.bold.underline);
-    console.log('stats', JSON.stringify(stats));    
+    console.log();
+    // console.log('stats', JSON.stringify(stats));
     console.log(`  Total Pages Scanned: ${stats.pageCount}`);
 
     const totalTime = Object.keys(stats.auditTimesByPageUrl).reduce((sum, url) => {
@@ -123,12 +146,14 @@ module.exports = (options) => {
 
     console.log(`  Average Page Audit Time: ${Math.round(totalTime/stats.pageCount)} ms`);
 
-    const indexFile = stats.scanId +'/index.html';
-    let  mainreport = `<tr><td><a href="${indexFile}">${stats.scanId}</a></td><td>${stats.mainURL}</td><td>${stats.pageCount}</td><td>${Math.round(totalTime/stats.pageCount)} ms</td><td>${stats.startTime.toLocaleString()}</tr>`
+    const leftFrameName = stats.scanId +'/leftFrame.html';
+    const frameIndexName = stats.scanId +'/frameIndex.html';
+    let  mainreport = `<tr><td><a href="${frameIndexName}">${stats.scanId}</a></td><td>${stats.mainURL}</td><td>${stats.pageCount}</td><td>${Math.round(totalTime/stats.pageCount)} ms</td><td>${stats.startTime.toLocaleString()}</tr>`
     mainreport = mainreport +'\n';
 
+    await writeResult('reports/'+ frameIndexName, indexFrameContents);
+    await writeResult('reports/'+ leftFrameName, leftFrameContents);
     await appendResult('reports/report.html', mainreport);
-    await writeResult('reports/'+ indexFile, indexreport);
   }
 
  function writeResult(fname, result){
