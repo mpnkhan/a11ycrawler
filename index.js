@@ -47,7 +47,7 @@ module.exports = (options) => {
                           `;
 
   crawler.on('fetchcomplete', (queueItem, data, response) => {
-    console.log(queueItem.url);
+    console.log("Fetched", queueItem.url);
     // var resume = crawler.wait();
     const ac = runLighthouse(queueItem.url);
     ac.then(results => {
@@ -63,6 +63,7 @@ module.exports = (options) => {
   })
 
 //DEBUG Start
+/** /
   var originalEmit = crawler.emit;
 crawler.emit = function(evtName, queueItem) {
     crawler.queue.countItems({ fetched: true }, function(err, completeCount) {
@@ -86,6 +87,7 @@ crawler.emit = function(evtName, queueItem) {
     console.log(evtName, queueItem ? queueItem.url ? queueItem.url : queueItem : null);
     originalEmit.apply(crawler, arguments);
 };
+/**/
 //DEBUG End
 
 
