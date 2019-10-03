@@ -30,7 +30,7 @@ const stats = {
     crawler.parseScriptTags = false;
     crawler.maxDepth = 2;
     crawler.maxChromeInstances =5;
-    crawler.scanSubdomains =true;
+    // crawler.scanSubdomains =true;
   
     stats.mainURL = initialURL;
 
@@ -63,8 +63,8 @@ const stats = {
 /**/
         request.post(url.resolve(initialURL, formAction), {
             form: Object.assign(formDefaults, {
-                login_email: "XXX",
-                login_password: "XXX"
+                login_email: "paypalinclusive@gmail.com",
+                login_password: "Paypal@123"
             }),
             jar: true
         }, function (error, response, body) {

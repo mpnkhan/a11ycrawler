@@ -9,7 +9,7 @@ lib-cov
 
 pids
 
-reports
+#reports
 
 #log giles
 npm-debug.log
