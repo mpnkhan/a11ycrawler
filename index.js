@@ -153,7 +153,7 @@
         results2 = '\n' + results2;
         stats.auditTimesByPageUrl[url] = {startTime: new Date()}
         lighthouse.once('close', () => {
-          console.log(  `file =>  ${filename}`)
+          console.log(  `file ${url} =>  , ${filename}`)
           // resolve(results2);
         })
         resolve(results2);
